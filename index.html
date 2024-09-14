@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人生の長さを体験する</title>
+    <style>
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(31, 20px); /* 初期は31日モード */
+            grid-auto-rows: 20px;
+            gap: 0;
+        }
+        .grid-item {
+            background-color: white;
+            border: 1px solid #ddd;
+        }
+        .filled {
+            background-color: lightblue;
+        }
+        .future {
+            background-color: lightgreen;
+        }
+        .year-label {
+            display: flex;
+            align-items: center;
+            justify-content: left;
+            font-size: 10px;
+            color: lightgray;
+            grid-column: span 31;
+            height: 20px;
+            margin: 0;
+            padding-left: 2px;
+            border-top: 1px solid lightgray;
+        }
+        .year-start {
+            border-left: 3px solid black; /* 年の区切りを明確にするための線 */
+        }
+    </style>
+</head>
+<body>
+    <h1>人生の長さを体験する</h1>
+
+    <!-- 生年月日入力 -->
+    <label for="birthdate">生年月日を入力してください (YYYYMMDD):</label><br>
+    <input type="text" id="birthdate" name="birthdate" placeholder="YYYYMMDD"><br><br>
+    
+    <!-- 目標年月日入力 -->
+    <label for="targetdate">将来の目標年月日を入力してください (YYYYMMDD):</label><br>
+    <input type="text" id="targetdate" name="targetdate" placeholder="YYYYMMDD"><br><br>
+    
+    <!-- グリッド幅の選択 -->
+    <label for="gridWidth">横のグリッド幅を選択:</label>
+    <select id="gridWidth" name="gridWidth" onchange="changeGridWidth()">
+        <option value="31">31日</option>
+        <option value="93">93日</option>
+    </select>
+
+    <button onclick="drawGrid()">グリッドを描画</button>
+
+    <div id="grid" class="grid-container"></div>
+
+    <script>
+        // ローカルストレージに保存された状態を取得
+        function loadState() {
+            const birthdate = localStorage.getItem('birthdate');
+            const targetdate = localStorage.getItem('targetdate');
+            const gridWidth = localStorage.getItem('gridWidth');
+            return { birthdate, targetdate, gridWidth };
+        }
+
+        // ローカルストレージに状態を保存
+        function saveState(birthdate, targetdate, gridWidth) {
+            localStorage.setItem('birthdate', birthdate);
+            localStorage.setItem('targetdate', targetdate);
+            localStorage.setItem('gridWidth', gridWidth);
+        }
+
+        // グリッド幅を変更
+        function changeGridWidth() {
+            const gridWidth = document.getElementById('gridWidth').value;
+            const grid = document.getElementById('grid');
+
+            // グリッド幅によってマスのサイズを変更
+            if (gridWidth == 31) {
+                grid.style.gridTemplateColumns = `repeat(${gridWidth}, 20px)`;
+                document.querySelectorAll('.grid-item').forEach(item => {
+                    item.style.width = '20px';
+                    item.style.height = '20px';
+                });
+            } else if (gridWidth == 93) {
+                grid.style.gridTemplateColumns = `repeat(${gridWidth}, 6.67px)`; // 1/3のサイズに変更
+                document.querySelectorAll('.grid-item').forEach(item => {
+                    item.style.width = '6.67px';
+                    item.style.height = '6.67px';
+                });
+            }
+        }
+
+        function isLeapYear(year) {
+            return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+        }
+
+        function getDaysInMonth(year, month) {
+            const daysInMonth = [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+            return daysInMonth[month - 1];
+        }
+
+        function daysBetween(date1, date2) {
+            const oneDay = 24 * 60 * 60 * 1000;
+            return Math.round((date2 - date1) / oneDay);
+        }
+
+        function drawGrid() {
+            const birthdateInput = document.getElementById('birthdate').value;
+            const targetdateInput = document.getElementById('targetdate').value;
+            const gridWidth = document.getElementById('gridWidth').value;
+
+            if (!birthdateInput || !/^\d{8}$/.test(birthdateInput)) {
+                alert("正しい形式で生年月日を入力してください (YYYYMMDD)");
+                return;
+            }
+
+            const birthdate = new Date(
+                parseInt(birthdateInput.substring(0, 4)),
+                parseInt(birthdateInput.substring(4, 6)) - 1,
+                parseInt(birthdateInput.substring(6, 8))
+            );
+            const today = new Date();
+            const totalDays = daysBetween(birthdate, today);
+            const totalYears = Math.ceil(totalDays / 365);
+
+            let targetDate;
+            if (targetdateInput && /^\d{8}$/.test(targetdateInput)) {
+                targetDate = new Date(
+                    parseInt(targetdateInput.substring(0, 4)),
+                    parseInt(targetdateInput.substring(4, 6)) - 1,
+                    parseInt(targetdateInput.substring(6, 8))
+                );
+            }
+
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+
+            const finalDate = targetDate && targetDate > today ? targetDate : today;
+            const extendedYears = Math.ceil(daysBetween(birthdate, finalDate) / 365);
+
+            for (let year = 0; year < extendedYears; year++) {
+                const currentYear = birthdate.getFullYear() + year;
+
+                // 年の最初に年ラベルを追加
+                const yearLabel = document.createElement('div');
+                yearLabel.classList.add('year-label');
+                yearLabel.innerText = currentYear;
+                grid.appendChild(yearLabel);
+
+                let blockCount = 0;
+                for (let month = 1; month <= 12; month++) {
+                    const daysInMonth = getDaysInMonth(currentYear, month);
+                    for (let day = 1; day <= daysInMonth; day++) {
+                        const currentDate = new Date(currentYear, month - 1, day);
+                        const div = document.createElement('div');
+                        div.classList.add('grid-item');
+
+                        // 年の最初のマス目に区切り線を追加
+                        if (month === 1 && day === 1) {
+                            div.classList.add('year-start');
+                        }
+
+                        // 生年月日前の処理
+                        if (year === 0 && currentDate < birthdate) {
+                            div.classList.add('before-birthday');
+                        }
+                        // 今日までの範囲を塗りつぶし
+                        else if (currentDate <= today) {
+                            div.classList.add('filled');
+                        }
+                        // 目標日までの範囲を塗りつぶし
+                        else if (targetDate && currentDate >= today && currentDate <= targetDate) {
+                            div.classList.add('future');
+                        }
+
+                        grid.appendChild(div);
+                        blockCount++;
+
+                        // 93日ごとに区切り
+                        if (gridWidth == 93 && blockCount % 93 == 0) {
+                            const yearLabel = document.createElement('div');
+                            yearLabel.classList.add('year-label');
+                            yearLabel.innerText = currentYear + " 続き";
+                            grid.appendChild(yearLabel);
+                        }
+                    }
+                }
+            }
+
+            // 保存された状態を維持
+            saveState(birthdateInput, targetdateInput, gridWidth);
+        }
+
+        // ページ読み込み時に保存状態をロード
+        window.onload = function () {
+            const state = loadState();
+            if (state.birthdate) {
+                document.getElementById('birthdate').value = state.birthdate;
+            }
+            if (state.targetdate) {
+                document.getElementById('targetdate').value = state.targetdate;
+            }
+            if (state.gridWidth) {
+                document.getElementById('gridWidth').value = state.gridWidth;
+                changeGridWidth(); // グリッド幅を反映
+            }
+            if (state.birthdate) {
+                drawGrid(); // 前回の状態を復元してグリッドを描画
+            }
+        };
+    </script>
+</body>
+</html>
