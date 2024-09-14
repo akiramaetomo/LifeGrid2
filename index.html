@@ -5,15 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>人生の長さを体験する</title>
     <style>
+        /* セルサイズの定数 */
+        :root {
+            --cell-size: 20px; /* 31日モードのセルサイズ */
+            --cell-size-93: 6.67px; /* 93日モードのセルサイズ */
+        }
+
         .grid-container {
             display: grid;
-            grid-template-columns: repeat(31, 20px); /* 初期は31日モード */
-            grid-auto-rows: 20px;
+            grid-template-columns: repeat(31, var(--cell-size)); /* 初期は31日モード */
+            grid-auto-rows: var(--cell-size);
             gap: 0;
         }
         .grid-item {
             background-color: white;
             border: 1px solid #ddd;
+            width: var(--cell-size);
+            height: var(--cell-size);
         }
         .filled {
             background-color: lightblue;
@@ -28,7 +36,7 @@
             font-size: 10px;
             color: lightgray;
             grid-column: span 31;
-            height: 20px;
+            height: var(--cell-size);
             margin: 0;
             padding-left: 2px;
             border-top: 1px solid lightgray;
@@ -56,8 +64,6 @@
         <option value="93">93日</option>
     </select>
 
-    <button onclick="drawGrid()">グリッドを描画</button>
-
     <div id="grid" class="grid-container"></div>
 
     <script>
@@ -81,20 +87,15 @@
             const gridWidth = document.getElementById('gridWidth').value;
             const grid = document.getElementById('grid');
 
-            // グリッド幅によってマスのサイズを変更
+            // グリッド幅によってマスのサイズを変更し、即時描画
             if (gridWidth == 31) {
-                grid.style.gridTemplateColumns = `repeat(${gridWidth}, 20px)`;
-                document.querySelectorAll('.grid-item').forEach(item => {
-                    item.style.width = '20px';
-                    item.style.height = '20px';
-                });
+                document.documentElement.style.setProperty('--cell-size', '20px');
+                grid.style.gridTemplateColumns = `repeat(${gridWidth}, var(--cell-size))`;
             } else if (gridWidth == 93) {
-                grid.style.gridTemplateColumns = `repeat(${gridWidth}, 6.67px)`; // 1/3のサイズに変更
-                document.querySelectorAll('.grid-item').forEach(item => {
-                    item.style.width = '6.67px';
-                    item.style.height = '6.67px';
-                });
+                document.documentElement.style.setProperty('--cell-size', '6.67px');
+                grid.style.gridTemplateColumns = `repeat(${gridWidth}, var(--cell-size))`;
             }
+            drawGrid(); // 描画を即時反映
         }
 
         function isLeapYear(year) {
@@ -183,13 +184,7 @@
                         grid.appendChild(div);
                         blockCount++;
 
-                        // 93日ごとに区切り
-                        if (gridWidth == 93 && blockCount % 93 == 0) {
-                            const yearLabel = document.createElement('div');
-                            yearLabel.classList.add('year-label');
-                            yearLabel.innerText = currentYear + " 続き";
-                            grid.appendChild(yearLabel);
-                        }
+                        // 93日ごとの区切りをなくす（文字列表示の除去）
                     }
                 }
             }
@@ -210,9 +205,6 @@
             if (state.gridWidth) {
                 document.getElementById('gridWidth').value = state.gridWidth;
                 changeGridWidth(); // グリッド幅を反映
-            }
-            if (state.birthdate) {
-                drawGrid(); // 前回の状態を復元してグリッドを描画
             }
         };
     </script>
