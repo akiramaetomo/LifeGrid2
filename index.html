@@ -45,16 +45,18 @@
                 width: 100%; /* モバイルでは幅をフルに使う */
             }
         }
-*/
 
+*/
 
 
         .grid-container {
             display: grid;
             gap: 0;
+            margin: 0 auto; /* グリッド全体を中央揃え */
+
         }
         .grid-item {
-            background-color: rgb(199, 184, 184);
+            background-color: rgb(239, 232, 232);
             border: 0px solid #ddd;
             box-sizing: border-box;
         }
@@ -206,7 +208,8 @@
             grid.innerHTML = '';
 
             const finalDate = targetDate && targetDate > today ? targetDate : today;
-            const extendedYears = Math.ceil(daysBetween(birthdate, finalDate) / 365);
+//            const extendedYears = Math.ceil(daysBetween(birthdate, finalDate) / 365);
+            const extendedYears = finalDate.getFullYear() - birthdate.getFullYear() + 1;
 
             const config = gridConfig[gridWidth];
             const daysPerRow = config.daysPerRow;
@@ -280,6 +283,9 @@
                 grid.appendChild(gridContainer);
             }
 
+
+            adjustGridWidth();
+
             // 状態をローカルストレージに保存
             saveState(birthdateInput, targetdateInput, gridWidth);
         }
@@ -308,7 +314,33 @@
         };
 
 
-
+        function adjustGridWidth() {
+            const gridWidth = document.getElementById('gridWidth').value;
+            const config = gridConfig[gridWidth];
+            
+            // グリッドのサイズを計算 (マス目のサイズ × 行内のマス目数)
+            const gridContainerWidth = config.gridItemSize * config.daysPerRow;
+            
+            // 画面の幅を取得
+            const screenWidth = window.innerWidth;
+            
+            // スケーリング計算
+            let scaleRatio = screenWidth / gridContainerWidth;
+            
+            // スケールが1を超える場合、スケールダウンしない（つまり拡大しない）
+            if (scaleRatio > 1) scaleRatio = 1;
+            
+            // グリッド全体のスケール調整
+            const gridContainer = document.querySelector('.grid-container');
+            if (gridContainer) {
+                gridContainer.style.transform = `scale(${scaleRatio})`;
+                gridContainer.style.transformOrigin = '0 0'; // 左上からスケーリング
+            }
+        
+            // ボディ幅を調整してスクロールが発生しないようにする
+            document.body.style.width = `${screenWidth}px`;
+        }
+        
 
     </script>
 </body>
