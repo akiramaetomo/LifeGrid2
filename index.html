@@ -9,17 +9,27 @@
             font-size: 20px;
             text-align: center;
         }
+        .form-container {
+            white-space: nowrap; /* 改行を防ぐ */
+        }
+        .form-group {
+            display: inline-block; /* 並べて表示 */
+            margin-right: 50px; /* 隙間を開ける */
+        }
         .grid-container {
             display: grid;
             gap: 0;
         }
         .grid-item {
-            background-color: rgb(216, 216, 216);
+            background-color: rgb(199, 184, 184);
             border: 0px solid #ddd;
             box-sizing: border-box;
         }
+        .grid-item.with-border {
+            border: 1px solid #ddd; /* くっきりさせるための線 */
+        }
         .filled {
-            background-color: rgb(55, 136, 218);
+            background-color: rgb(55, 58, 218);
         }
         .future {
             background-color: rgb(188, 209, 66);
@@ -37,7 +47,7 @@
     </style>
 </head>
 <body>
-    <h1>Life Grid</h1>
+    <h1>Life Grid 2</h1>
 
     <!-- 生年月日入力 -->
     <label for="birthdate">start (YYYYMMDD):</label>
@@ -47,20 +57,33 @@
     <label for="targetdate">goal (YYYYMMDD):</label>
     <input type="text" id="targetdate" name="targetdate" placeholder="YYYYMMDD"><br>
     
-    <!-- グリッド幅の選択 -->
-    <label for="gridWidth">days per line:</label>
-    <select id="gridWidth" name="gridWidth" onchange="changeGridWidth()">
-        <option value="31">31日</option>
-        <option value="93">93日</option>
-        <option value="100">100日</option>
-        <option value="366">366日</option>
-    </select>
+    <div class="form-group">
+        <!-- グリッド幅の選択 -->
+        <label for="gridWidth">Days per line:</label>
+        <select id="gridWidth" name="gridWidth" onchange="changeGridWidth()">
+            <option value="31">31 days</option>
+            <option value="93">93 days</option>
+            <option value="100">100 days</option>
+            <option value="366">366 days</option>
+        </select>
+    </div>
 
-    <button onclick="drawGrid()">draw</button>
+    <div class="form-group">
+        <!-- チェックボックスで線の表示・非表示を切り替え -->
+        <input type="checkbox" id="showBorders" onchange="toggleBorders()">Show Grid Lines
+    </div>
+
+    <!--
+    <button onclick="drawGrid()">***draw***</button>
+    -->
 
     <div id="grid"></div>
 
     <script>
+        let showBorders = false; // グローバル変数として宣言し、初期値を true に設定
+
+
+
         const gridConfig = {
             31: { gridItemSize: 21, daysPerRow: 31, yearLabelFontSize: 14 },
             93: { gridItemSize: 7, daysPerRow: 93, yearLabelFontSize: 7 },
@@ -94,6 +117,15 @@
             const oneDay = 24 * 60 * 60 * 1000;
             return Math.round((date2 - date1) / oneDay);
         }
+
+
+        function changeGridWidth() {
+            const gridWidth = document.getElementById('gridWidth').value;
+            
+            // 選択された日数に基づいて、グリッドを再描画する
+            drawGrid();
+        }
+
 
         function drawGrid() {
             const birthdateInput = document.getElementById('birthdate').value;
@@ -153,6 +185,14 @@
                         const currentDate = new Date(currentYear, month - 1, day);
                         const div = document.createElement('div');
                         div.classList.add('grid-item');
+
+                        // マス目の線の表示/非表示をチェックボックスで制御
+                        if (showBorders) {
+                            div.classList.add('with-border');
+                        } else {
+                            div.classList.remove('with-border');
+                        }
+
                         div.style.width = `${gridItemSize}px`; // マス目の幅
                         div.style.height = `${gridItemSize}px`; // マス目の高さ
             
@@ -204,6 +244,15 @@
                 drawGrid(); // 前回の状態を復元してグリッドを描画
             }
         };
+
+        function toggleBorders() {
+            // チェックボックスの状態に基づいてshowBordersを更新
+            showBorders = document.getElementById('showBorders').checked;
+            // グリッドを再描画して、線の表示/非表示を反映
+            drawGrid();
+        }
+
+
     </script>
 </body>
 </html>
