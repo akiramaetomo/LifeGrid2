@@ -9,13 +9,46 @@
             font-size: 20px;
             text-align: center;
         }
+
+
+
         .form-container {
-            white-space: nowrap; /* 改行を防ぐ */
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: nowrap; /* 折り返しを防ぐ */
         }
+
         .form-group {
-            display: inline-block; /* 並べて表示 */
-            margin-right: 50px; /* 隙間を開ける */
+            display: flex; /* Flexboxで横並びにする */
+            align-items: center; /* 垂直方向を揃える */
+            gap: 10px; /* ラベルとドロップダウンリストの間の隙間 */
         }
+
+        .form-group label {
+            min-width: 100px; /* ラベルの最小幅を設定 */
+        }
+
+        .form-group select {
+            min-width: 150px; /* ドロップダウンリストの最小幅を設定 */
+        }
+
+
+/*
+        @media (max-width: 600px) {
+            .form-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .form-group {
+                width: 100%; /* モバイルでは幅をフルに使う */
+            }
+        }
+*/
+
+
+
         .grid-container {
             display: grid;
             gap: 0;
@@ -57,36 +90,42 @@
     <label for="targetdate">goal (YYYYMMDD):</label>
     <input type="text" id="targetdate" name="targetdate" placeholder="YYYYMMDD"><br>
     
-    <div class="form-group">
-        <!-- グリッド幅の選択 -->
-        <label for="gridWidth">Days per line:</label>
-        <select id="gridWidth" name="gridWidth" onchange="changeGridWidth()">
-            <option value="31">31 days</option>
-            <option value="93">93 days</option>
-            <option value="100">100 days</option>
-            <option value="366">366 days</option>
-        </select>
+    <div class="form-container">
+        <div class="form-group">
+            <!-- グリッド幅の選択 -->
+            <label for="gridWidth">Days per line:</label>
+            <select id="gridWidth" name="gridWidth" onchange="changeGridWidth()">
+                <option value="31">31 days</option>
+                <option value="93">93 days</option>
+                <option value="100">100 days</option>
+                <option value="366">366 days</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <!-- チェックボックスで線の表示・非表示を切り替え -->
+            <input type="checkbox" id="showBorders" onchange="toggleBorders()" checked>Grid Lines
+        </div>
+        <div class="form-group">
+            <input type="checkbox" id="showYearLabels" onchange="toggleYearLabels()" checked>Year Labels
+        </div>
+        <div class="form-group">
+            <button onclick="drawGrid()">***draw***</button>
+        </div>
     </div>
 
-    <div class="form-group">
-        <!-- チェックボックスで線の表示・非表示を切り替え -->
-        <input type="checkbox" id="showBorders" onchange="toggleBorders()">Show Grid Lines
-    </div>
-
-    <!--
-    <button onclick="drawGrid()">***draw***</button>
-    -->
 
     <div id="grid"></div>
 
     <script>
         let showBorders = false; // グローバル変数として宣言し、初期値を true に設定
-
+        let showYearLabels = true; // デフォルトで年ラベルを表示
+        let yearLabelGap = 1; // 年ラベルが無い場合のグリッドの隙間
 
 
         const gridConfig = {
             31: { gridItemSize: 21, daysPerRow: 31, yearLabelFontSize: 14 },
-            93: { gridItemSize: 7, daysPerRow: 93, yearLabelFontSize: 7 },
+            93: { gridItemSize: 6, daysPerRow: 93, yearLabelFontSize: 6 },
             100: { gridItemSize: 5, daysPerRow: 100, yearLabelFontSize: 5 },
             366: { gridItemSize: 3, daysPerRow: 366, yearLabelFontSize: 3 }
         };
@@ -124,6 +163,17 @@
             
             // 選択された日数に基づいて、グリッドを再描画する
             drawGrid();
+        }
+
+        function toggleBorders() {
+            // チェックボックスの状態に基づいてshowBordersを更新
+            showBorders = document.getElementById('showBorders').checked;
+            // グリッドを再描画して、線の表示/非表示を反映
+            drawGrid();
+        }
+        function toggleYearLabels() {
+            showYearLabels = document.getElementById('showYearLabels').checked;
+            drawGrid(); // グリッドを再描画
         }
 
 
@@ -165,14 +215,21 @@
 
             for (let year = 0; year < extendedYears; year++) {
                 const currentYear = birthdate.getFullYear() + year;
-            
-                // 年のラベルを追加し、フォントサイズを設定
-                const yearLabel = document.createElement('div');
-                yearLabel.classList.add('year-label');
-                yearLabel.innerText = currentYear;
-                yearLabel.style.fontSize = `${yearLabelFontSize}px`; // フォントサイズを設定
-                grid.appendChild(yearLabel);
-            
+                    
+                // 年ラベルの表示/非表示を切り替え
+                if (showYearLabels) {
+                    const yearLabel = document.createElement('div');
+                    yearLabel.classList.add('year-label');
+                    yearLabel.innerText = currentYear;
+                    yearLabel.style.fontSize = `${yearLabelFontSize}px`;
+                    grid.appendChild(yearLabel);
+                } else {
+                    // 年ラベルが無い場合は任意の隙間を追加
+                    const emptyDiv = document.createElement('div');
+                    emptyDiv.style.height = `${yearLabelGap}px`; // 任意の隙間
+                    grid.appendChild(emptyDiv);
+                }
+                    
                 let blockCount = 0;
                 const gridContainer = document.createElement('div');
                 gridContainer.classList.add('grid-container');
@@ -229,6 +286,11 @@
 
         // ページ読み込み時に保存状態をロード
         window.onload = function () {
+
+            // チェックボックスの状態を基に初期化
+            showBorders = document.getElementById('showBorders').checked;
+            showYearLabels = document.getElementById('showYearLabels').checked;
+
             const state = loadState();
             if (state.birthdate) {
                 document.getElementById('birthdate').value = state.birthdate;
@@ -245,12 +307,7 @@
             }
         };
 
-        function toggleBorders() {
-            // チェックボックスの状態に基づいてshowBordersを更新
-            showBorders = document.getElementById('showBorders').checked;
-            // グリッドを再描画して、線の表示/非表示を反映
-            drawGrid();
-        }
+
 
 
     </script>
