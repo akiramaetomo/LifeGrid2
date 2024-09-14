@@ -3,71 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>人生の長さを体験する</title>
+    <title>Life Grid</title>
     <style>
-        /* セルサイズの定数 */
-        :root {
-            --cell-size: 20px; /* 31日モードのセルサイズ */
-            --cell-size-93: 6.67px; /* 93日モードのセルサイズ */
+        h1 {
+            font-size: 20px;
+            text-align: center;
         }
-
         .grid-container {
             display: grid;
-            grid-template-columns: repeat(31, var(--cell-size)); /* 初期は31日モード */
-            grid-auto-rows: var(--cell-size);
             gap: 0;
         }
         .grid-item {
-            background-color: white;
-            border: 1px solid #ddd;
-            width: var(--cell-size);
-            height: var(--cell-size);
+            background-color: rgb(216, 216, 216);
+            border: 0px solid #ddd;
+            box-sizing: border-box;
         }
         .filled {
-            background-color: lightblue;
+            background-color: rgb(55, 136, 218);
         }
         .future {
-            background-color: lightgreen;
+            background-color: rgb(188, 209, 66);
         }
         .year-label {
             display: flex;
             align-items: center;
             justify-content: left;
-            font-size: 10px;
             color: lightgray;
             grid-column: span 31;
-            height: var(--cell-size);
             margin: 0;
             padding-left: 2px;
-            border-top: 1px solid lightgray;
-        }
-        .year-start {
-            border-left: 3px solid black; /* 年の区切りを明確にするための線 */
+/*            border-top: 1px solid lightgray;  */
         }
     </style>
 </head>
 <body>
-    <h1>人生の長さを体験する</h1>
+    <h1>Life Grid</h1>
 
     <!-- 生年月日入力 -->
-    <label for="birthdate">生年月日を入力してください (YYYYMMDD):</label><br>
-    <input type="text" id="birthdate" name="birthdate" placeholder="YYYYMMDD"><br><br>
+    <label for="birthdate">start (YYYYMMDD):</label>
+    <input type="text" id="birthdate" name="birthdate" placeholder="YYYYMMDD"><br>
     
     <!-- 目標年月日入力 -->
-    <label for="targetdate">将来の目標年月日を入力してください (YYYYMMDD):</label><br>
-    <input type="text" id="targetdate" name="targetdate" placeholder="YYYYMMDD"><br><br>
+    <label for="targetdate">goal (YYYYMMDD):</label>
+    <input type="text" id="targetdate" name="targetdate" placeholder="YYYYMMDD"><br>
     
     <!-- グリッド幅の選択 -->
-    <label for="gridWidth">横のグリッド幅を選択:</label>
+    <label for="gridWidth">days per line:</label>
     <select id="gridWidth" name="gridWidth" onchange="changeGridWidth()">
         <option value="31">31日</option>
         <option value="93">93日</option>
+        <option value="100">100日</option>
+        <option value="366">366日</option>
     </select>
 
-    <div id="grid" class="grid-container"></div>
+    <button onclick="drawGrid()">draw</button>
+
+    <div id="grid"></div>
 
     <script>
-        // ローカルストレージに保存された状態を取得
+        const gridConfig = {
+            31: { gridItemSize: 21, daysPerRow: 31, yearLabelFontSize: 14 },
+            93: { gridItemSize: 7, daysPerRow: 93, yearLabelFontSize: 7 },
+            100: { gridItemSize: 5, daysPerRow: 100, yearLabelFontSize: 5 },
+            366: { gridItemSize: 3, daysPerRow: 366, yearLabelFontSize: 3 }
+        };
+
         function loadState() {
             const birthdate = localStorage.getItem('birthdate');
             const targetdate = localStorage.getItem('targetdate');
@@ -75,27 +75,10 @@
             return { birthdate, targetdate, gridWidth };
         }
 
-        // ローカルストレージに状態を保存
         function saveState(birthdate, targetdate, gridWidth) {
             localStorage.setItem('birthdate', birthdate);
             localStorage.setItem('targetdate', targetdate);
             localStorage.setItem('gridWidth', gridWidth);
-        }
-
-        // グリッド幅を変更
-        function changeGridWidth() {
-            const gridWidth = document.getElementById('gridWidth').value;
-            const grid = document.getElementById('grid');
-
-            // グリッド幅によってマスのサイズを変更し、即時描画
-            if (gridWidth == 31) {
-                document.documentElement.style.setProperty('--cell-size', '20px');
-                grid.style.gridTemplateColumns = `repeat(${gridWidth}, var(--cell-size))`;
-            } else if (gridWidth == 93) {
-                document.documentElement.style.setProperty('--cell-size', '6.67px');
-                grid.style.gridTemplateColumns = `repeat(${gridWidth}, var(--cell-size))`;
-            }
-            drawGrid(); // 描画を即時反映
         }
 
         function isLeapYear(year) {
@@ -128,9 +111,6 @@
                 parseInt(birthdateInput.substring(6, 8))
             );
             const today = new Date();
-            const totalDays = daysBetween(birthdate, today);
-            const totalYears = Math.ceil(totalDays / 365);
-
             let targetDate;
             if (targetdateInput && /^\d{8}$/.test(targetdateInput)) {
                 targetDate = new Date(
@@ -146,28 +126,36 @@
             const finalDate = targetDate && targetDate > today ? targetDate : today;
             const extendedYears = Math.ceil(daysBetween(birthdate, finalDate) / 365);
 
+            const config = gridConfig[gridWidth];
+            const daysPerRow = config.daysPerRow;
+            const gridItemSize = config.gridItemSize;
+            const yearLabelFontSize = config.yearLabelFontSize;
+
             for (let year = 0; year < extendedYears; year++) {
                 const currentYear = birthdate.getFullYear() + year;
-
-                // 年の最初に年ラベルを追加
+            
+                // 年のラベルを追加し、フォントサイズを設定
                 const yearLabel = document.createElement('div');
                 yearLabel.classList.add('year-label');
                 yearLabel.innerText = currentYear;
+                yearLabel.style.fontSize = `${yearLabelFontSize}px`; // フォントサイズを設定
                 grid.appendChild(yearLabel);
-
+            
                 let blockCount = 0;
+                const gridContainer = document.createElement('div');
+                gridContainer.classList.add('grid-container');
+                gridContainer.style.display = 'grid';
+                gridContainer.style.gridTemplateColumns = `repeat(${daysPerRow}, ${gridItemSize}px)`;
+
                 for (let month = 1; month <= 12; month++) {
                     const daysInMonth = getDaysInMonth(currentYear, month);
                     for (let day = 1; day <= daysInMonth; day++) {
                         const currentDate = new Date(currentYear, month - 1, day);
                         const div = document.createElement('div');
                         div.classList.add('grid-item');
-
-                        // 年の最初のマス目に区切り線を追加
-                        if (month === 1 && day === 1) {
-                            div.classList.add('year-start');
-                        }
-
+                        div.style.width = `${gridItemSize}px`; // マス目の幅
+                        div.style.height = `${gridItemSize}px`; // マス目の高さ
+            
                         // 生年月日前の処理
                         if (year === 0 && currentDate < birthdate) {
                             div.classList.add('before-birthday');
@@ -180,16 +168,22 @@
                         else if (targetDate && currentDate >= today && currentDate <= targetDate) {
                             div.classList.add('future');
                         }
-
-                        grid.appendChild(div);
+            
+                        gridContainer.appendChild(div);
                         blockCount++;
 
-                        // 93日ごとの区切りをなくす（文字列表示の除去）
+                        if (blockCount % daysPerRow === 0) {
+                            const rowBreak = document.createElement('div');
+                            rowBreak.style.gridColumn = `span ${daysPerRow}`;
+                            gridContainer.appendChild(rowBreak);
+                        }
                     }
                 }
+
+                grid.appendChild(gridContainer);
             }
 
-            // 保存された状態を維持
+            // 状態をローカルストレージに保存
             saveState(birthdateInput, targetdateInput, gridWidth);
         }
 
@@ -204,7 +198,10 @@
             }
             if (state.gridWidth) {
                 document.getElementById('gridWidth').value = state.gridWidth;
-                changeGridWidth(); // グリッド幅を反映
+                changeGridWidth();
+            }
+            if (state.birthdate) {
+                drawGrid(); // 前回の状態を復元してグリッドを描画
             }
         };
     </script>
