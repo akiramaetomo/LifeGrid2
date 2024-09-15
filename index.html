@@ -7,7 +7,7 @@
     <style>
         h1 {
             font-size: 20px;
-            text-align: center;
+/*            text-align: center;*/
         }
 
 
@@ -30,24 +30,29 @@
         }
 
         .form-group select {
-            min-width: 150px; /* ドロップダウンリストの最小幅を設定 */
+            min-width: 100px; /* ドロップダウンリストの最小幅を設定 */
         }
 
 
-/*
+        /*
         @media (max-width: 600px) {
             .form-container {
                 flex-direction: column;
                 gap: 10px;
             }
-
+    
             .form-group {
-                width: 100%; /* モバイルでは幅をフルに使う */
-            }
+                    width: 100%; 
+            }    
         }
 
-*/
+        */
 
+        @media (max-width: 600px) {
+            .grid-container {
+                transform-origin: top left;
+            }
+        }
 
         .grid-container {
             display: grid;
@@ -112,7 +117,7 @@
             <input type="checkbox" id="showYearLabels" onchange="toggleYearLabels()" checked>Year Labels
         </div>
         <div class="form-group">
-            <button onclick="drawGrid()">***draw***</button>
+            <button onclick="drawGrid()">**draw**</button>
         </div>
     </div>
 
